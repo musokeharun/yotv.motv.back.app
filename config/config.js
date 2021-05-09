@@ -1,3 +1,5 @@
 module.exports = {
-    'secret': 'supersecret'
+    'secret': 'supersecret',
+    'baseEmails': ["albayanmedia-africa.com"],
+    'bcrpytRounds' : 10
 }

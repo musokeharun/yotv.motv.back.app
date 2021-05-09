@@ -11,7 +11,7 @@ const realTime = require("./realtime");
 app.use(cors());
 app.use(express.json());
 app.use(bodyParser.json())
-// app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({extended: true}));
 
 // AUTH MIDDLEWARE
 app.use('/auth', auth)
