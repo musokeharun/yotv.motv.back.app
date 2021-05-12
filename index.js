@@ -44,6 +44,7 @@ app.use(function commonVariables(req, res, next) {
 app.use("/query", query)
 app.use("/datasource", dataSources)
 app.use("/realtime", realTime)
+app.use("/partner", realTime)
 
 //NOW LISTEN
 let PORT = process.env.PORT || 8000;

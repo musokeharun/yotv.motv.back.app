@@ -147,7 +147,7 @@ dataSource.post("/streamTypes", async (req, res) => {
     await dataProcessor(res, chartType, body)
 })
 
-dataSource.post("/deviceTypes", (async (req, res) => {
+dataSource.post("/deviceTypes", (async (req , res) => {
     // INPUT VARIABLES
     const {chartType} = res.locals;
     const body = {field: "devicesType", ...req.body}
