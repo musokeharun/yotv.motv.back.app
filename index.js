@@ -6,6 +6,7 @@ const auth = require("./auth");
 const dataSources = require("./datasources");
 const query = require("./query");
 const realTime = require("./realtime");
+const push = require("./push")
 
 //MIDDLEWARE
 app.use(cors());
@@ -41,7 +42,8 @@ app.use(function commonVariables(req, res, next) {
 })
 
 // APP CONCENTRATED FUNCTIONALITY
-app.use("/query", query)
+app.use("/query", query.query)
+app.use("/push", push)
 app.use("/datasource", dataSources)
 app.use("/realtime", realTime)
 
