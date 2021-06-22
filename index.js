@@ -46,6 +46,7 @@ app.use("/query", query.query)
 app.use("/push", push)
 app.use("/datasource", dataSources)
 app.use("/realtime", realTime)
+app.use("/partner", realTime)
 
 //NOW LISTEN
 let PORT = process.env.PORT || 8000;
