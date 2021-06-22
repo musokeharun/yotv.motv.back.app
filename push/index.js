@@ -2,6 +2,7 @@ const express = require('express');
 const push = express.Router();
 const {innerQuery} = require("../query/index");
 const {DateTime} = require("luxon")
+const {getGreetingTime} = require("../utils");
 
 const createChannelArray = (channel) => {
 
@@ -9,8 +10,15 @@ const createChannelArray = (channel) => {
 
     let split = channel.split(" ");
     r.push(channel);
-    if (split.length > 1)
+    if (split.length > 1) {
+        if (split.length > 2) {
+            r.push(`${split[0]}${split[1]}`)
+        } else {
+            if (split[0].toLowerCase().trim() !== "radio" && split[0].toLowerCase().trim() !== "tv" && split[0].toLowerCase().trim() !== "fm")
+                r.push(split[0]);
+        }
         r.push(split.join(""));
+    }
     return r;
 }
 
@@ -47,8 +55,10 @@ const realChannelInText = (channels, logs, result) => {
 
 }
 
-const ifHas = (title, name, result, logs, index) => {
+const ifHas = (title, name, result, logs, index, label) => {
     if (title.toLowerCase().includes(`${name} `) || title.toLowerCase().includes(` ${name}`)) {
+        if (label)
+            name = label;
         result[name] ? result[name]++ : result[name] = 1;
         console.log(name + " found " + title)
         logs[index][4]['isParsed'] = true;
@@ -72,11 +82,25 @@ const vodEnKibandaInText = (logs, result) => {
             let title = log[4]['title'];
 
             ifHas(title, "covid", result, logs, index);
-            ifHas(title, "president", result, logs, index);
+            ifHas(title, "vs", result, logs, index, "sports");
+            ifHas(title, "president", result, logs, index,);
             ifHas(title, "vod", result, logs, index);
             ifHas(title, "kibanda", result, logs, index);
         }
     });
+}
+
+const getTimeGraph = (logs) => {
+
+    let result = {times: {}, days: {}, period: {}};
+
+    logs.forEach(log => {
+        const dateTime = DateTime.fromISO(log[0]);
+        result.days[dateTime.weekdayShort] ? result.days[dateTime.weekdayShort]++ : result.days[dateTime.weekdayShort] = 1;
+        result.times[dateTime.toFormat("ha")] ? result.times[dateTime.toFormat("ha")]++ : result.times[dateTime.toFormat("ha")] = 1;
+        result.period[getGreetingTime(dateTime.hour)] ? result.period[getGreetingTime(dateTime.hour)]++ : result.period[getGreetingTime(dateTime.hour)] = 1;
+    });
+    return result;
 }
 
 push.post("/report", (async (req, res) => {
@@ -95,19 +119,25 @@ push.post("/report", (async (req, res) => {
 
 push.post("/", (async (req, res) => {
 
-    let fromObj = DateTime.now().minus({weeks: 1}).startOf('week');
-    let from = fromObj.toMillis().toString();
-    let toObj = DateTime.now().minus({weeks: 1}).endOf('week');
-    let to = toObj.toMillis().toString();
+    const {from, to} = req.body;
+    if (!from || !to) {
+        res.send("No dates found");
+        res.end();
+    }
+
+    let fromObj = DateTime.fromMillis(from).startOf('day');
+    let fromMillis = fromObj.toMillis().toString();
+    let toObj = DateTime.fromMillis(to).endOf('month');
+    let toMilllis = toObj.toMillis().toString();
 
     console.log(fromObj.toString())
     console.log(toObj.toString())
 
     try {
-        let {data: channelsRes} = await innerQuery(from, to, "SELECT channels_name,channels_active FROM channels;")
+        let {data: channelsRes} = await innerQuery(fromMillis, toMilllis, "SELECT channels_name,channels_active FROM channels;")
         const channels = resProcessor(channelsRes);
 
-        let {data} = await innerQuery(from, to, `SELECT log_time AS 'Time',users_email as 'Sent by',log_string_parameter2 as "Topic",log_int_parameter1 as 'Type',log_text_parameter1 as 'Message data' FROM log LEFT JOIN users ON log_users_id = users_id WHERE $__timeFilter(log_time) and log_type ='topic push message' ORDER BY log_time DESC`);
+        let {data} = await innerQuery(fromMillis, toMilllis, `SELECT log_time AS 'Time',users_email as 'Sent by',log_string_parameter2 as "Topic",log_int_parameter1 as 'Type',log_text_parameter1 as 'Message data' FROM log LEFT JOIN users ON log_users_id = users_id WHERE $__timeFilter(log_time) and log_type ='topic push message' ORDER BY log_time DESC`);
         const logs = resProcessor(data);
 
         logs.map(row => row[4] = JSON.parse(row[4]))
@@ -120,10 +150,15 @@ push.post("/", (async (req, res) => {
 
         othersTitle(logs, result);
 
+        const graphs = getTimeGraph(logs);
+
         console.log(logs.length);
         console.log(Object.getOwnPropertyNames(result).reduce(((previousValue, currentValue) => result[currentValue] + previousValue), 0))
+        console.log(Object.getOwnPropertyNames(result).reduce((previousValue, currentValue) => previousValue.toUpperCase() + " " + currentValue.toUpperCase()))
+        console.log(Object.getOwnPropertyNames(graphs.days).reduce((previousValue, currentValue) => previousValue.toUpperCase() + " " + currentValue.toUpperCase()))
+        console.log(Object.getOwnPropertyNames(graphs.times).reduce((previousValue, currentValue) => previousValue.toUpperCase() + " " + currentValue.toUpperCase()))
 
-        res.json(result);
+        res.json({graphs, result, title: "Notifications"});
     } catch (e) {
         if (e.response) {
             // The request was made and the server responded with a status code
