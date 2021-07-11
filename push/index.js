@@ -170,7 +170,10 @@ push.post("/", async (req, res) => {
 
     //console.log(logs);
 
-    const list = logs.map((row) => (row[4] = JSON.parse(row[4])));
+    const list = logs.map((row) => {
+      row[4] = JSON.parse(row[4]);
+      return row;
+    });
 
     const result = {};
 
