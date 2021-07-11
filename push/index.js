@@ -168,9 +168,9 @@ push.post("/", async (req, res) => {
     );
     const logs = resProcessor(data);
 
-    console.log(logs);
+    //console.log(logs);
 
-    logs.map((row) => (row[4] = JSON.parse(row[4])));
+    const list = logs.map((row) => (row[4] = JSON.parse(row[4])));
 
     const result = {};
 
@@ -208,7 +208,7 @@ push.post("/", async (req, res) => {
       )
     );
 
-    res.json({ graphs, result, title: "Notifications" });
+    res.json({ graphs, result, title: "Notifications", list });
   } catch (e) {
     if (e.response) {
       // The request was made and the server responded with a status code
