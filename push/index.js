@@ -168,7 +168,7 @@ push.post("/", async (req, res) => {
     );
     const logs = resProcessor(data);
 
-    // console.log(logs);
+    console.log(logs);
 
     logs.map((row) => (row[4] = JSON.parse(row[4])));
 
