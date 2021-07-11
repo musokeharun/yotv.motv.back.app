@@ -126,7 +126,6 @@ push.post("/report", async (req, res) => {
     .minus({ days: 1 })
     .startOf("day")
     .toMillis()
-    .setZone(zone)
     .toString();
   let to = DateTime.now().endOf("day").toMillis().toString();
 
