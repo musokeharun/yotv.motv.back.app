@@ -129,8 +129,13 @@ push.post("/report", async (req, res) => {
     .toString();
   let to = DateTime.now().endOf("day").toMillis().toString();
 
-  let { data } = await innerQuery(from, to, sql);
-  res.json(data);
+  try {
+    let { data } = await innerQuery(from, to, sql);
+    res.json(data);
+  } catch (e) {
+    console.log(e);
+    res.send("Error").status(500).end();
+  }
 });
 
 push.post("/", async (req, res) => {
